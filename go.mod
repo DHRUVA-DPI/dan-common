@@ -1,3 +1,3 @@
-module github.com/datakaveri/common-repo
+module github.com/DHRUVA-DPI/dan-common
 
 go 1.26.5

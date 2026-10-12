@@ -6,7 +6,7 @@ Shared code for DAN services:
 - `config`: the shared config sections and their validation
 
 ```
-go get github.com/datakaveri/common-repo
+go get github.com/DHRUVA-DPI/dan-common
 ```
 
 ## response
