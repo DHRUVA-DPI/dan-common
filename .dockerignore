@@ -1,0 +1,9 @@
+# Services copy this repo into their image builds as a named build context.
+# Only the Go sources are needed to compile it.
+*
+
+!go.mod
+!go.sum
+!config
+!response
+**/*_test.go
