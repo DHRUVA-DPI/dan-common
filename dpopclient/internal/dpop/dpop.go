@@ -17,13 +17,19 @@ import (
 // The `ath` claim is necessary for requests including the `Authorization: Dpop ...` header
 func GenerateDPoPProof(r *http.Request, token string, privateKey *ecdsa.PrivateKey) (string, error) {
 
+	// making copy of the URL to remove query and fragment, since `htu` URL must not have these
+	// use .Clone method when moving to go 1.27
+	urlCopy := *(r.URL)
+	urlCopy.RawQuery = ""
+	urlCopy.Fragment = ""
+
 	claims := dpop.ProofTokenClaims{
 		RegisteredClaims: &jwt.RegisteredClaims{
 			ID:       rand.Text(),
 			IssuedAt: jwt.NewNumericDate(time.Now()),
 		},
 		Method: dpop.HTTPVerb(r.Method),
-		URL:    r.RequestURI,
+		URL:    urlCopy.String(),
 	}
 
 	if token != "" {
