@@ -9,8 +9,27 @@ import (
 	"net/http"
 )
 
-// TypeSuccess is the type of every success envelope.
-const TypeSuccess = "urn:dan:Success"
+// component names the service in every type URN. SetComponent sets it.
+var component string
+
+// SetComponent sets the component name used in every type URN, e.g.
+// "digipin" gives urn:dan:digipin:BadRequest. Call it once in main, before
+// serving requests.
+func SetComponent(name string) {
+	component = name
+}
+
+// Type returns the type URN for typeName: urn:dan:<component>:<typeName>, or
+// urn:dan:<typeName> if SetComponent was never called.
+func Type(typeName string) string {
+	if component == "" {
+		return "urn:dan:" + typeName
+	}
+	return "urn:dan:" + component + ":" + typeName
+}
+
+// TypeNameSuccess is the type name of every success envelope.
+const TypeNameSuccess = "Success"
 
 // TitleSuccess is the title for a success.
 const TitleSuccess = "Success"
@@ -19,24 +38,25 @@ const TitleSuccess = "Success"
 // the cause goes to the log instead.
 const detailInternalError = "the request could not be completed"
 
-// Kind is an error class: a stable type URN, the title that never varies for
-// it, and the HTTP status it is sent with. Services declare their own kinds,
-// named urn:dan:<Name>.
+// Kind is an error class: a stable type name, the title that never varies for
+// it, and the HTTP status it is sent with. Its type URN is Type(TypeName), so
+// it carries the component of the service that sends it. Services declare
+// their own kinds.
 type Kind struct {
-	Type   string
-	Title  string
-	Status int
+	TypeName string
+	Title    string
+	Status   int
 }
 
 // The generic kinds every service may use. A service declares its own kind
 // only when a client needs to tell that error apart from these.
 var (
-	BadRequest    = Kind{Type: "urn:dan:BadRequest", Title: "Bad Request", Status: http.StatusBadRequest}
-	Unauthorized  = Kind{Type: "urn:dan:Unauthorized", Title: "Unauthorized", Status: http.StatusUnauthorized}
-	Forbidden     = Kind{Type: "urn:dan:Forbidden", Title: "Forbidden", Status: http.StatusForbidden}
-	NotFound      = Kind{Type: "urn:dan:NotFound", Title: "Not Found", Status: http.StatusNotFound}
-	Conflict      = Kind{Type: "urn:dan:Conflict", Title: "Conflict", Status: http.StatusConflict}
-	InternalError = Kind{Type: "urn:dan:InternalError", Title: "Internal error", Status: http.StatusInternalServerError}
+	BadRequest    = Kind{TypeName: "BadRequest", Title: "Bad Request", Status: http.StatusBadRequest}
+	Unauthorized  = Kind{TypeName: "Unauthorized", Title: "Unauthorized", Status: http.StatusUnauthorized}
+	Forbidden     = Kind{TypeName: "Forbidden", Title: "Forbidden", Status: http.StatusForbidden}
+	NotFound      = Kind{TypeName: "NotFound", Title: "Not Found", Status: http.StatusNotFound}
+	Conflict      = Kind{TypeName: "Conflict", Title: "Conflict", Status: http.StatusConflict}
+	InternalError = Kind{TypeName: "InternalError", Title: "Internal error", Status: http.StatusInternalServerError}
 )
 
 // Success is the success envelope. Results carries the payload; Detail
@@ -62,19 +82,19 @@ type Problem struct {
 
 // WriteSuccess writes a success envelope with the given status and results.
 func WriteSuccess(w http.ResponseWriter, status int, title string, results any) {
-	WriteJSON(w, status, Success{Type: TypeSuccess, Title: title, Results: results})
+	WriteJSON(w, status, Success{Type: Type(TypeNameSuccess), Title: title, Results: results})
 }
 
 // WriteSuccessWithCount is WriteSuccess plus the count a list endpoint reports
 // alongside its results.
 func WriteSuccessWithCount(w http.ResponseWriter, status int, title string, count int, results any) {
-	WriteJSON(w, status, Success{Type: TypeSuccess, Title: title, Count: &count, Results: results})
+	WriteJSON(w, status, Success{Type: Type(TypeNameSuccess), Title: title, Count: &count, Results: results})
 }
 
 // WriteSuccessDetail writes a success envelope whose payload is a message
 // rather than results.
 func WriteSuccessDetail(w http.ResponseWriter, status int, title, detail string) {
-	WriteJSON(w, status, Success{Type: TypeSuccess, Title: title, Detail: detail})
+	WriteJSON(w, status, Success{Type: Type(TypeNameSuccess), Title: title, Detail: detail})
 }
 
 // WriteProblem writes an error response. The status and title come from the
@@ -85,7 +105,7 @@ func WriteProblem(w http.ResponseWriter, k Kind, detail string) {
 
 // WriteProblemContext is WriteProblem plus service-specific context.
 func WriteProblemContext(w http.ResponseWriter, k Kind, detail string, context any) {
-	WriteJSON(w, k.Status, Problem{Type: k.Type, Title: k.Title, Detail: detail, Context: context})
+	WriteJSON(w, k.Status, Problem{Type: Type(k.TypeName), Title: k.Title, Detail: detail, Context: context})
 }
 
 // WriteInternalError logs cause, when there is one, and tells the client only

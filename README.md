@@ -11,16 +11,22 @@ go get github.com/DHRUVA-DPI/dan-common
 
 ## response
 
+Set the component name once in `main`. It goes into every `type` URN:
+
+```go
+response.SetComponent("digipin") // types become urn:dan:digipin:<TypeName>
+```
+
 Success:
 
 ```json
-{ "type": "urn:dan:Success", "title": "Success", "count": 2, "results": [ ... ] }
+{ "type": "urn:dan:aip:Success", "title": "Success", "count": 2, "results": [ ... ] }
 ```
 
 Error:
 
 ```json
-{ "type": "urn:dan:BadRequest", "title": "Bad Request", "detail": "...", "context": { ... } }
+{ "type": "urn:dan:aip:BadRequest", "title": "Bad Request", "detail": "...", "context": { ... } }
 ```
 
 `context` is optional and filled by the service with error-specific detail.
@@ -40,7 +46,8 @@ Common error kinds: `BadRequest` (400), `Unauthorized` (401), `Forbidden` (403),
 kinds are declared in the service:
 
 ```go
-var errInvalidDigipin = response.Kind{Type: "urn:dan:InvalidDigipin", Title: "Invalid DIGIPIN", Status: http.StatusBadRequest}
+var errInvalidDigipin = response.Kind{TypeName: "InvalidDigipin", Title: "Invalid DIGIPIN", Status: http.StatusBadRequest}
+
 ```
 
 ## config
