@@ -28,7 +28,7 @@ func TestWriteSuccess(t *testing.T) {
 		t.Errorf("status = %d, want %d", rec.Code, http.StatusCreated)
 	}
 	body := decode(t, rec)
-	if body["type"] != TypeSuccess || body["title"] != "Created" {
+	if body["type"] != Type(TypeNameSuccess) || body["title"] != "Created" {
 		t.Errorf("body = %v", body)
 	}
 	for _, absent := range []string{"count", "detail"} {
@@ -65,7 +65,7 @@ func TestWriteSuccessDetail(t *testing.T) {
 }
 
 func TestWriteProblem(t *testing.T) {
-	kind := Kind{Type: "urn:dan:Example", Title: "Example", Status: http.StatusBadRequest}
+	kind := Kind{TypeName: "Example", Title: "Example", Status: http.StatusBadRequest}
 
 	rec := httptest.NewRecorder()
 	WriteProblem(rec, kind, "what went wrong")
@@ -74,7 +74,7 @@ func TestWriteProblem(t *testing.T) {
 		t.Errorf("status = %d, want %d", rec.Code, http.StatusBadRequest)
 	}
 	body := decode(t, rec)
-	if body["type"] != kind.Type || body["title"] != kind.Title || body["detail"] != "what went wrong" {
+	if body["type"] != Type(kind.TypeName) || body["title"] != kind.Title || body["detail"] != "what went wrong" {
 		t.Errorf("body = %v", body)
 	}
 	if _, ok := body["context"]; ok {
@@ -88,16 +88,16 @@ func TestCommonKindsSendTheirStatus(t *testing.T) {
 		WriteProblem(rec, k, "detail")
 
 		if rec.Code != k.Status {
-			t.Errorf("%s: status = %d, want %d", k.Type, rec.Code, k.Status)
+			t.Errorf("%s: status = %d, want %d", k.TypeName, rec.Code, k.Status)
 		}
-		if body := decode(t, rec); body["type"] != k.Type || body["title"] != k.Title {
-			t.Errorf("%s: body = %v", k.Type, body)
+		if body := decode(t, rec); body["type"] != Type(k.TypeName) || body["title"] != k.Title {
+			t.Errorf("%s: body = %v", k.TypeName, body)
 		}
 	}
 }
 
 func TestWriteProblemContext(t *testing.T) {
-	kind := Kind{Type: "urn:dan:Example", Title: "Example", Status: http.StatusBadRequest}
+	kind := Kind{TypeName: "Example", Title: "Example", Status: http.StatusBadRequest}
 
 	rec := httptest.NewRecorder()
 	WriteProblemContext(rec, kind, "rows failed", map[string]int{"row": 3})
@@ -117,7 +117,28 @@ func TestWriteInternalErrorHidesCause(t *testing.T) {
 		t.Errorf("status = %d, want 500", rec.Code)
 	}
 	body := decode(t, rec)
-	if body["type"] != InternalError.Type || body["detail"] != detailInternalError {
+	if body["type"] != Type(InternalError.TypeName) || body["detail"] != detailInternalError {
 		t.Errorf("body = %v", body)
+	}
+}
+
+func TestTypeIncludesComponent(t *testing.T) {
+	if got := Type("BadRequest"); got != "urn:dan:BadRequest" {
+		t.Errorf("without component: Type = %q", got)
+	}
+
+	SetComponent("digipin")
+	t.Cleanup(func() { SetComponent("") })
+
+	rec := httptest.NewRecorder()
+	WriteProblem(rec, BadRequest, "detail")
+	if body := decode(t, rec); body["type"] != "urn:dan:digipin:BadRequest" {
+		t.Errorf("problem type = %v", body["type"])
+	}
+
+	rec = httptest.NewRecorder()
+	WriteSuccess(rec, http.StatusOK, TitleSuccess, nil)
+	if body := decode(t, rec); body["type"] != "urn:dan:digipin:Success" {
+		t.Errorf("success type = %v", body["type"])
 	}
 }
