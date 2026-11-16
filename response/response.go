@@ -13,19 +13,19 @@ import (
 var component string
 
 // SetComponent sets the component name used in every type URN, e.g.
-// "digipin" gives urn:dan:digipin:BadRequest. Call it once in main, before
+// "aip" gives urn:dhruva:aip:BadRequest. Call it once in main, before
 // serving requests.
 func SetComponent(name string) {
 	component = name
 }
 
-// Type returns the type URN for typeName: urn:dan:<component>:<typeName>, or
-// urn:dan:<typeName> if SetComponent was never called.
+// Type returns the type URN for typeName: urn:dhruva:<component>:<typeName>, or
+// urn:dhruva:<typeName> if SetComponent was never called.
 func Type(typeName string) string {
 	if component == "" {
-		return "urn:dan:" + typeName
+		return "urn:dhruva:" + typeName
 	}
-	return "urn:dan:" + component + ":" + typeName
+	return "urn:dhruva:" + component + ":" + typeName
 }
 
 // TypeNameSuccess is the type name of every success envelope.

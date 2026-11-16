@@ -123,7 +123,7 @@ func TestWriteInternalErrorHidesCause(t *testing.T) {
 }
 
 func TestTypeIncludesComponent(t *testing.T) {
-	if got := Type("BadRequest"); got != "urn:dan:BadRequest" {
+	if got := Type("BadRequest"); got != "urn:dhruva:BadRequest" {
 		t.Errorf("without component: Type = %q", got)
 	}
 
@@ -132,13 +132,13 @@ func TestTypeIncludesComponent(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	WriteProblem(rec, BadRequest, "detail")
-	if body := decode(t, rec); body["type"] != "urn:dan:digipin:BadRequest" {
+	if body := decode(t, rec); body["type"] != "urn:dhruva:digipin:BadRequest" {
 		t.Errorf("problem type = %v", body["type"])
 	}
 
 	rec = httptest.NewRecorder()
 	WriteSuccess(rec, http.StatusOK, TitleSuccess, nil)
-	if body := decode(t, rec); body["type"] != "urn:dan:digipin:Success" {
+	if body := decode(t, rec); body["type"] != "urn:dhruva:digipin:Success" {
 		t.Errorf("success type = %v", body["type"])
 	}
 }
